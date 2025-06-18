@@ -158,6 +158,7 @@ for a in range(len(installed_desktop_files)):
                     if origin_line.count('NoDisplay=') == 0 and origin_line.count('Categories=') == 0 and origin_line.count('OnlyShowIn=') == 0 and origin_line.count('NotShowIn') == 0 :
                         destination_file.write(origin_line)
             destination_file.close()
+            os.chmod(start_menu_desktop_path + "/" + config_new + '/' + installed_desktop_files[a][1], 0o700) 
         origin_file.close()
 
 with open(config_applications_menu_file, 'w') as file:
