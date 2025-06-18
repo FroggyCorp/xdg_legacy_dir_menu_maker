@@ -39,15 +39,16 @@ If you already have a $HOME/.config/menus/plasma-applications.menu, you need to 
 2. Copy .directory files to _directory for easy use of icons and create .directory file in each dir for easy config
 3. Search for .desktop files depending on XDG_DATA_DIRS and other directory you added
 4. Compare with .desktop already present inside the start menu directory
-5. Copy new file inside _new, remove some tag which don't show with <LegacyDir>.
+5. Copy new file inside _new
 6. Create plasma-applications.menu in $HOME/.config/menus which will override the one in /etc/xdg/menus
 7. Move file, create dir to the arch you want to have. Launch again the prog to get automatic .directory files
 8. In case of, launch "kbuildsycoca6  --menutest --noincremental" in console to update the menu
+9. Launch again, so it will add or remove param from .desktop to work with LegacyDir
+
 
 # Limitation :
-_hidden & _delete are same. Put files inside if you don't want them to show in start menu. _delete should not show as well in search, but actually don't work.
 Don't make a directory with extra char like &. Use .directory files to change the showed name
-You can't have a .desktop file in 2 location. The second will "erase" the first declared.
+You can't have the same .desktop file in 2 location. The second will "erase" the first declared.
 
 # How to remove :
 Delete $HOME/.config/menus/plasma-applications.menu
@@ -55,7 +56,6 @@ Run "kbuildsycoca6  --menutest --noincremental"
 
 # Todo :
 Compare deleted files from system, and move the one in start menu to _lost
-Make _delete working
 
 # Version :
-0.1
+0.2

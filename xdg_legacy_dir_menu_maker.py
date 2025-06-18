@@ -21,6 +21,8 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
+#version 0.2
+
 
 import os
 from os import walk
@@ -56,10 +58,44 @@ config_applications_menu = "<!DOCTYPE Menu PUBLIC '-//freedesktop//DTD Menu 1.0/
 <Menu>\n \
  <Name>Applications</Name>\n \
  <LegacyDir>" + start_menu_desktop_path + "</LegacyDir>\n \
+</Menu>\n "
+'''
 <Menu><Name>" + config_hidden + "</Name><Deleted/></Menu>\n \
 <Menu><Name>" + config_directory + "</Name><Deleted/></Menu>\n \
 <Menu><Name>" + config_delete + "</Name><Deleted/></Menu>\n \
-</Menu>\n "
+'''
+
+def search_in_file(file_name, array):
+    find = False
+    with open(file_name, 'r') as file:
+        for a in range(len(array)):
+            if (array[a] in file.read()):
+                find = True
+                break
+            file.seek(0)
+    file.close()
+    return find
+
+def add_line_in_file(file_name, param):
+    with open(file_name, 'a') as file:
+        file.write(param)
+    file.close()
+
+def remove_line_in_file(file_name, array):
+    if search_in_file(file_name, array) == True:
+        with open(file_name, 'r') as source:
+            with open(file_name + '.new', 'w') as dest:
+                for source_line in source:
+                    find = False
+                    for a in range(len(array)):
+                        if array[a] in source_line:
+                            find = True
+                    if find == False:
+                        dest.write(source_line)
+            dest.close()
+        source.close()
+        os.replace(file_name + '.new', file_name)
+        os.chmod(file_name, 0o700) 
 
 #regroup XDG_DATA_DIRS and installed_desktop_path
 for a in range(len(XDG_DATA_DIRS)):
@@ -73,6 +109,7 @@ for a in range(len(config_dir)):
     if (os.path.isdir(b)) == False:
         os.mkdir(b)
 
+'''
 #define specific .directory of base directory
 c = start_menu_desktop_path + '/' + config_hidden + '/.directory'
 if (os.path.isfile(c)) == False:
@@ -80,17 +117,18 @@ if (os.path.isfile(c)) == False:
         file.write('[Desktop Entry]\n' \
             'Icon=\n' \
             'Type=Directory\n' \
-            'Hidden=true)\n')
+            'Hidden=true\n')
     file.close()
+
 c = start_menu_desktop_path + '/' + config_delete + '/.directory'
 if (os.path.isfile(c)) == False:
     with open(c, 'w') as file:
         file.write('[Desktop Entry]\n' \
             'Icon=\n' \
             'Type=Directory\n' \
-            'Hidden=true)\n')
+            'Hidden=true\n')
     file.close()
-
+'''
 
 
 #copy .directory inside _directorie, no matter if exist or not
@@ -151,16 +189,52 @@ for a in range(len(installed_desktop_files)):
         if installed_desktop_files[a][1] == start_menu_desktop_files[b][1] :
             present = 1
     if present == 0:    #File don't exist, we copy it
-        with open(installed_desktop_files[a][0] + "/" + installed_desktop_files[a][1], 'r') as origin_file:
-            with open(start_menu_desktop_path + "/" + config_new + '/' + installed_desktop_files[a][1], 'w') as destination_file:
-                for origin_line in origin_file:
-                    #remove some config on .desktop so LegacyDir can work
-                    if origin_line.count('NoDisplay=') == 0 and origin_line.count('Categories=') == 0 and origin_line.count('OnlyShowIn=') == 0 and origin_line.count('NotShowIn') == 0 :
-                        destination_file.write(origin_line)
-            destination_file.close()
-            os.chmod(start_menu_desktop_path + "/" + config_new + '/' + installed_desktop_files[a][1], 0o700) 
-        origin_file.close()
+        source = installed_desktop_files[a][0] + "/" + installed_desktop_files[a][1]
+        dest = start_menu_desktop_path + "/" + config_new + '/' + installed_desktop_files[a][1]
 
+#        with open(source, 'r') as origin_file:
+            #we search if we need to remove some part
+#            if search_in_file(source, ['NoDisplay=', 'Categories=', 'OnlyShowIn=', 'NotShowIn=']):
+            #if ('NoDisplay=' in origin_file.read()) or ('Categories=' in origin_file.read()) or ('OnlyShowIn=' in origin_file.read()) or ('NotShowIn=' in origin_file.read()):
+                #yes, so we remove them
+#                with open(dest, 'w') as destination_file:
+#                    for origin_line in origin_file:
+                        #remove some config on .desktop so LegacyDir can work
+#                        if origin_line.count('NoDisplay=') == 0 and origin_line.count('Categories=') == 0 and origin_line.count('OnlyShowIn=') == 0 and origin_line.count('NotShowIn') == 0 :
+#                            destination_file.write(origin_line)
+#                destination_file.close()
+#            else:
+#        origin_file.close()
+
+        shutil.copyfile(source, dest)
+        os.chmod(dest, 0o700) 
+
+
+#We organise .desktop option depending on their position in start menu architecture
+#remove option for all dir (need optimization ?)
+for (dir_path, dir_names, file_name) in walk(start_menu_desktop_path):
+    for a in range(len(file_name)):
+        source = dir_path + "/" + file_name[a]
+        if os.path.isfile(source) and '.desktop' in source:
+            if search_in_file(source, ['NoDisplay=', 'Categories=', 'OnlyShowIn=', 'NotShowIn=', 'Hidden=']):
+                remove_line_in_file(source, ['NoDisplay=', 'Categories=', 'OnlyShowIn=', 'NotShowIn=', 'Hidden='])
+
+
+#add hidden or notshow for _delete and _hidden
+for (dir_path, dir_names, file_name) in walk(start_menu_desktop_path):
+    if config_delete in dir_path:
+        for a in range(len(file_name)):
+            if '.desktop' in file_name[a]:
+                if search_in_file(dir_path + '/' + file_name[a], ['Hidden=']) == False:
+                    add_line_in_file(dir_path + '/' + file_name[a], 'Hidden=true')
+    if config_hidden in dir_path:
+        for a in range(len(file_name)):
+            if '.desktop' in file_name[a]:
+                if search_in_file(dir_path + '/' + file_name[a], ['NoDisplay']) == False:
+                    add_line_in_file(dir_path + '/' + file_name[a], 'NoDisplay=true')
+                
+
+#create menu file 
 with open(config_applications_menu_file, 'w') as file:
     for line in config_applications_menu:
         file.write(line)
