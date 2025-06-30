@@ -58,12 +58,7 @@ config_applications_menu = "<!DOCTYPE Menu PUBLIC '-//freedesktop//DTD Menu 1.0/
 <Menu>\n \
  <Name>Applications</Name>\n \
  <LegacyDir>" + start_menu_desktop_path + "</LegacyDir>\n \
-</Menu>\n "
-'''
-<Menu><Name>" + config_hidden + "</Name><Deleted/></Menu>\n \
-<Menu><Name>" + config_directory + "</Name><Deleted/></Menu>\n \
-<Menu><Name>" + config_delete + "</Name><Deleted/></Menu>\n \
-'''
+</Menu>\n"
 
 def search_in_file(file_name, array):
     find = False
@@ -77,9 +72,18 @@ def search_in_file(file_name, array):
     return find
 
 def add_line_in_file(file_name, param):
-    with open(file_name, 'a') as file:
-        file.write(param)
-    file.close()
+#add param after [desktop entry]
+    with open(file_name, 'r') as source:
+        with open(file_name + '.new', 'w') as dest:
+            for source_line in source:
+                dest.write(source_line)
+                if source_line.find('[Desktop Entry]') == 0:
+                    dest.write(param + '\n')
+        dest.close()
+    source.close()
+    os.replace(file_name + '.new', file_name)
+    os.chmod(file_name, 0o700) 
+
 
 def remove_line_in_file(file_name, array):
     if search_in_file(file_name, array) == True:
@@ -109,7 +113,6 @@ for a in range(len(config_dir)):
     if (os.path.isdir(b)) == False:
         os.mkdir(b)
 
-'''
 #define specific .directory of base directory
 c = start_menu_desktop_path + '/' + config_hidden + '/.directory'
 if (os.path.isfile(c)) == False:
@@ -119,7 +122,7 @@ if (os.path.isfile(c)) == False:
             'Type=Directory\n' \
             'Hidden=true\n')
     file.close()
-
+'''
 c = start_menu_desktop_path + '/' + config_delete + '/.directory'
 if (os.path.isfile(c)) == False:
     with open(c, 'w') as file:
